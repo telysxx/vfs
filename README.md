@@ -232,8 +232,3 @@ minimal:/home$ pwd
 └── .gitignore
 ```
 
-## Коммиты
-
-Каждый этап работы зафиксирован отдельным коммитом по спецификации
-Conventional Commits: `feat(stage1)`, `feat(stage2)`, `feat(stage3)`,
-`feat(stage4)`, `feat(stage5)`.
