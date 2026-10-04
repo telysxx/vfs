@@ -1,29 +1,18 @@
-"""Interactive REPL and script runner of the shell emulator."""
+"""Interactive REPL of the shell emulator (stage 1)."""
 
-from pathlib import Path
-
-from commands import COMMANDS, CommandError, CommandFunction, Session
+from commands import COMMANDS, CommandError, CommandFunction
 from line_parser import parse_command
-from vfs import VFS, VFSError
 
-COMMENT_PREFIX = "#"
+DEFAULT_PROMPT = "VFS> "
 EXIT_COMMAND = "exit"
 
 
 class Shell:
-    """A UNIX-like shell working on an in-memory VFS."""
+    """A UNIX-like shell; commands are stubs at this stage."""
 
-    def __init__(self, vfs: VFS, prompt_template: str):
-        """Create a shell; the template may use ``{vfs}`` and ``{cwd}``."""
-        self.session = Session(vfs)
-        self.prompt_template = prompt_template
-
-    @property
-    def prompt(self) -> str:
-        """Return the prompt with the VFS name and directory filled in."""
-        return self.prompt_template.replace(
-            "{vfs}", self.session.vfs.name
-        ).replace("{cwd}", self.session.cwd)
+    def __init__(self, prompt: str = DEFAULT_PROMPT):
+        """Create a shell with the given prompt."""
+        self.prompt = prompt
 
     def execute_line(self, line: str) -> bool:
         """Execute one line; return False when the shell must exit."""
@@ -47,32 +36,12 @@ class Shell:
     def _run_handler(self, handler: CommandFunction, args: list[str]) -> None:
         """Run a command and report its errors without stopping."""
         try:
-            output = handler(self.session, args)
-        except (CommandError, VFSError) as exc:
+            output = handler(args)
+        except CommandError as exc:
             print(f"Error: {exc}")
             return
         if output:
-            print(output, end="" if output.endswith("\n") else "\n")
-
-    def run_script(self, script_path: str) -> bool:
-        """Run a script, echoing every command like a live dialog.
-
-        Empty lines and ``#`` comments are skipped. Returns False if the
-        script executed ``exit``.
-        """
-        path = Path(script_path)
-        if not path.is_file():
-            raise OSError(f"Script not found: {script_path}")
-        print(f"[script] {script_path}")
-        with path.open("r", encoding="utf-8") as file:
-            for raw_line in file:
-                line = raw_line.strip()
-                if not line or line.startswith(COMMENT_PREFIX):
-                    continue
-                print(f"{self.prompt}{line}")
-                if not self.execute_line(line):
-                    return False
-        return True
+            print(output)
 
     def repl(self) -> None:
         """Start the interactive command loop."""
